@@ -10,13 +10,18 @@
  * All database values stored in base units.
  * Display values converted on-demand from base + org preferences.
  */
-export type BaseUnit = 'kg' | 'm' | 's' | 'm/s';
-export type DisplayUnit = 'kg' | 'lb' | 'm' | 'cm' | 'in' | 'ft' | 's' | 'min' | 'm/s' | 'km/h' | 'mph';
+export type BaseUnit = 'kg' | 'm' | 's' | 'm/s' | 'count' | 'percent' | 'score' | 'reps' | '%' | 'level';
+export type DisplayUnit = 'kg' | 'lb' | 'm' | 'cm' | 'in' | 'ft' | 's' | 'min' | 'm/s' | 'km/h' | 'mph' | 'count' | 'percent' | 'score' | 'reps' | '%' | 'level';
 export interface UnitPreferences {
     mass: 'kg' | 'lb';
     distance: 'm' | 'cm' | 'in' | 'ft';
+    length: 'cm' | 'in';
     time: 's' | 'min';
     speed: 'm/s' | 'km/h' | 'mph';
+    count: 'count';
+    percent: 'percent';
+    score: 'score';
+    reps: 'reps';
 }
 export declare const DEFAULT_PREFERENCES: UnitPreferences;
 /**
@@ -52,6 +57,18 @@ export declare function convertUnit(value: number, fromUnit: DisplayUnit, toUnit
  * Metric type detection from metric keys
  */
 export declare function getMetricType(metricKey: string): keyof UnitPreferences;
+/**
+ * Check if a unit is non-convertible (pass-through)
+ */
+export declare function isNonConvertibleUnit(unit: string): unit is 'count' | 'percent' | 'score' | 'reps' | '%' | 'level';
+/**
+ * Get unit for test based on API unit field and baseUnitRef family
+ * This function prioritizes the baseUnitRef.key for unit determination
+ */
+export declare function getTestDisplayUnit(apiUnit: string, baseUnitRef: {
+    key: string;
+    family: string;
+} | undefined, preferences: UnitPreferences): DisplayUnit;
 /**
  * Safe conversion with error handling
  */

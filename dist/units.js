@@ -21,13 +21,20 @@ exports.formatValue = formatValue;
 exports.validateRoundTrip = validateRoundTrip;
 exports.convertUnit = convertUnit;
 exports.getMetricType = getMetricType;
+exports.isNonConvertibleUnit = isNonConvertibleUnit;
+exports.getTestDisplayUnit = getTestDisplayUnit;
 exports.safeConvertToBase = safeConvertToBase;
 exports.safeConvertFromBase = safeConvertFromBase;
 exports.DEFAULT_PREFERENCES = {
     mass: 'kg',
     distance: 'm',
+    length: 'cm',
     time: 's',
-    speed: 'm/s'
+    speed: 'm/s',
+    count: 'count',
+    percent: 'percent',
+    score: 'score',
+    reps: 'reps'
 };
 /**
  * Conversion factors to base units
@@ -47,7 +54,14 @@ const TO_BASE_FACTORS = {
     // Speed (base: m/s)
     'm/s': { factor: 1, base: 'm/s' },
     'km/h': { factor: 1 / 3.6, base: 'm/s' }, // Exact: 1 km/h = 1/3.6 m/s
-    mph: { factor: 0.44704, base: 'm/s' }
+    mph: { factor: 0.44704, base: 'm/s' },
+    // Non-convertible units (pass-through)
+    count: { factor: 1, base: 'count' },
+    percent: { factor: 1, base: 'percent' },
+    score: { factor: 1, base: 'score' },
+    reps: { factor: 1, base: 'reps' },
+    '%': { factor: 1, base: '%' },
+    level: { factor: 1, base: 'level' }
 };
 /**
  * Convert display value to base unit value
@@ -121,6 +135,15 @@ function convertUnit(value, fromUnit, toUnit) {
  * Metric type detection from metric keys
  */
 function getMetricType(metricKey) {
+    // Non-convertible unit families first (exact matches)
+    if (metricKey.includes('score') || metricKey.includes('fms') || metricKey.includes('rating'))
+        return 'score';
+    if (metricKey.includes('count') || metricKey.includes('number'))
+        return 'count';
+    if (metricKey.includes('percent') || metricKey.includes('%'))
+        return 'percent';
+    if (metricKey.includes('reps') || metricKey.includes('repetitions'))
+        return 'reps';
     // Common patterns in FitScore Pro metric keys
     if (metricKey.includes('weight') || metricKey.includes('mass'))
         return 'mass';
@@ -131,10 +154,19 @@ function getMetricType(metricKey) {
     if (metricKey.includes('speed') || metricKey.includes('velocity'))
         return 'speed';
     // Default mappings for common test types
+    const scoreMetrics = ['deep_squat', 'overhead_squat', 'shoulder_mobility', 'trunk_stability', 'rotary_stability'];
+    const countMetrics = ['push_ups', 'sit_ups', 'attempts'];
+    const repsMetrics = ['max_reps', 'total_reps'];
     const massMetrics = ['body_weight', 'max_weight', 'load'];
     const distanceMetrics = ['vertical_jump', 'broad_jump', 'reach', 'height'];
     const timeMetrics = ['sprint_time', 'reaction_time', 'hold_time'];
     const speedMetrics = ['max_speed', 'average_speed'];
+    if (scoreMetrics.some(m => metricKey.includes(m)))
+        return 'score';
+    if (countMetrics.some(m => metricKey.includes(m)))
+        return 'count';
+    if (repsMetrics.some(m => metricKey.includes(m)))
+        return 'reps';
     if (massMetrics.some(m => metricKey.includes(m)))
         return 'mass';
     if (distanceMetrics.some(m => metricKey.includes(m)))
@@ -145,6 +177,50 @@ function getMetricType(metricKey) {
         return 'speed';
     // Default fallback
     return 'distance';
+}
+/**
+ * Check if a unit is non-convertible (pass-through)
+ */
+function isNonConvertibleUnit(unit) {
+    return ['count', 'percent', 'score', 'reps', '%', 'level'].includes(unit);
+}
+/**
+ * Get unit for test based on API unit field and baseUnitRef family
+ * This function prioritizes the baseUnitRef.key for unit determination
+ */
+function getTestDisplayUnit(apiUnit, baseUnitRef, preferences) {
+    // Use baseUnitRef.key if available, otherwise fall back to apiUnit
+    const unitKey = baseUnitRef?.key || apiUnit;
+    // If unit key is non-convertible, return it directly
+    if (isNonConvertibleUnit(unitKey)) {
+        return unitKey;
+    }
+    // For convertible units, check the family and apply preferences
+    if (baseUnitRef?.family === 'length') {
+        return preferences.length; // Body measurements (height, reach)
+    }
+    if (baseUnitRef?.family === 'distance') {
+        return preferences.distance; // Movement/sports distances
+    }
+    if (baseUnitRef?.family === 'mass' || baseUnitRef?.family === 'weight') {
+        return preferences.mass;
+    }
+    if (baseUnitRef?.family === 'time') {
+        return preferences.time;
+    }
+    if (baseUnitRef?.family === 'speed') {
+        return preferences.speed;
+    }
+    // For families like 'count' and 'percent', use the unit key directly
+    if ((baseUnitRef?.family === 'count' || baseUnitRef?.family === 'percent') && unitKey) {
+        return unitKey;
+    }
+    // Default: return unit key if it's a valid DisplayUnit
+    if (unitKey in TO_BASE_FACTORS) {
+        return unitKey;
+    }
+    // Final fallback
+    return 'm';
 }
 /**
  * Safe conversion with error handling
