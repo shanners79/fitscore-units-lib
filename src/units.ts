@@ -161,7 +161,8 @@ export function getMetricType(metricKey: string): keyof UnitPreferences {
 
   // Common patterns in FitScore Pro metric keys
   if (metricKey.includes('weight') || metricKey.includes('mass')) return 'mass';
-  if (metricKey.includes('height') || metricKey.includes('distance') || metricKey.includes('jump')) return 'distance';
+  if (metricKey.includes('height') || metricKey.includes('reach') || metricKey.includes('span')) return 'length';
+  if (metricKey.includes('distance') || metricKey.includes('jump')) return 'distance';
   if (metricKey.includes('time') || metricKey.includes('duration')) return 'time';
   if (metricKey.includes('speed') || metricKey.includes('velocity')) return 'speed';
 
@@ -170,7 +171,8 @@ export function getMetricType(metricKey: string): keyof UnitPreferences {
   const countMetrics = ['push_ups', 'sit_ups', 'attempts'];
   const repsMetrics = ['max_reps', 'total_reps'];
   const massMetrics = ['body_weight', 'max_weight', 'load'];
-  const distanceMetrics = ['vertical_jump', 'broad_jump', 'reach', 'height'];
+  const lengthMetrics = ['height', 'reach', 'arm_span', 'leg_length', 'torso_length'];
+  const distanceMetrics = ['vertical_jump', 'broad_jump', 'sprint_distance', 'throw_distance'];
   const timeMetrics = ['sprint_time', 'reaction_time', 'hold_time'];
   const speedMetrics = ['max_speed', 'average_speed'];
 
@@ -178,6 +180,7 @@ export function getMetricType(metricKey: string): keyof UnitPreferences {
   if (countMetrics.some(m => metricKey.includes(m))) return 'count';
   if (repsMetrics.some(m => metricKey.includes(m))) return 'reps';
   if (massMetrics.some(m => metricKey.includes(m))) return 'mass';
+  if (lengthMetrics.some(m => metricKey.includes(m))) return 'length';
   if (distanceMetrics.some(m => metricKey.includes(m))) return 'distance';
   if (timeMetrics.some(m => metricKey.includes(m))) return 'time';
   if (speedMetrics.some(m => metricKey.includes(m))) return 'speed';

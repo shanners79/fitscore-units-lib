@@ -210,9 +210,17 @@ describe('Unit Conversion System', () => {
 
     test('getMetricType detects metric types correctly', () => {
       expect(getMetricType('body_weight')).toBe('mass');
+      expect(getMetricType('height')).toBe('length');
+      expect(getMetricType('reach')).toBe('length');
+      expect(getMetricType('arm_span')).toBe('length');
       expect(getMetricType('vertical_jump')).toBe('distance');
+      expect(getMetricType('broad_jump')).toBe('distance');
       expect(getMetricType('sprint_time')).toBe('time');
       expect(getMetricType('max_speed')).toBe('speed');
+      expect(getMetricType('push_ups')).toBe('count');
+      expect(getMetricType('deep_squat')).toBe('score');
+      expect(getMetricType('max_reps')).toBe('reps');
+      expect(getMetricType('body_fat_percent')).toBe('percent');
       expect(getMetricType('unknown_metric')).toBe('distance'); // fallback
     });
   });
