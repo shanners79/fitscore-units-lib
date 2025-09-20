@@ -108,15 +108,25 @@ describe('Advice Engine Stability Tests', () => {
   const preferences1: UnitPreferences = {
     mass: 'kg',
     distance: 'm',
+    length: 'cm',
     time: 's',
-    speed: 'm/s'
+    speed: 'm/s',
+    count: 'count',
+    percent: 'percent',
+    score: 'score',
+    reps: 'reps'
   };
 
   const preferences2: UnitPreferences = {
     mass: 'lb',
     distance: 'ft',
+    length: 'in',
     time: 'min',
-    speed: 'mph'
+    speed: 'mph',
+    count: 'count',
+    percent: 'percent',
+    score: 'score',
+    reps: 'reps'
   };
 
   test('Advice output is identical regardless of display preferences', () => {

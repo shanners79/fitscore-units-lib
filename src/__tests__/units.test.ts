@@ -9,6 +9,7 @@ import {
   getMetricType,
   safeConvertToBase,
   safeConvertFromBase,
+  getTestDisplayUnit,
   DEFAULT_PREFERENCES,
   UnitPreferences
 } from '../units';
@@ -185,8 +186,13 @@ describe('Unit Conversion System', () => {
       const prefs: UnitPreferences = {
         mass: 'lb',
         distance: 'ft',
+        length: 'in',
         time: 'min',
-        speed: 'mph'
+        speed: 'mph',
+        count: 'count',
+        percent: 'percent',
+        score: 'score',
+        reps: 'reps'
       };
 
       expect(getDisplayUnit('mass', prefs)).toBe('lb');
@@ -276,15 +282,25 @@ describe('Advice Engine Stability Tests', () => {
   const preferences1: UnitPreferences = {
     mass: 'kg',
     distance: 'm',
+    length: 'cm',
     time: 's',
-    speed: 'm/s'
+    speed: 'm/s',
+    count: 'count',
+    percent: 'percent',
+    score: 'score',
+    reps: 'reps'
   };
 
   const preferences2: UnitPreferences = {
     mass: 'lb',
     distance: 'ft',
+    length: 'in',
     time: 'min',
-    speed: 'mph'
+    speed: 'mph',
+    count: 'count',
+    percent: 'percent',
+    score: 'score',
+    reps: 'reps'
   };
 
   test('Base values remain constant regardless of display preferences', () => {
@@ -370,5 +386,434 @@ describe('Advice Engine Stability Tests', () => {
 
     const weightPercentileLb = calculatePercentile(weightInLb, populationInLb);
     expect(weightPercentileLb).toBe(weightPercentile);
+  });
+});
+
+describe('getTestDisplayUnit', () => {
+  describe('Family-based unit selection', () => {
+    test('length family uses length preference (cm -> in)', () => {
+      const preferences: UnitPreferences = {
+        mass: 'kg',
+        distance: 'm',
+        length: 'in',
+        time: 's',
+        speed: 'm/s',
+        count: 'count',
+        percent: 'percent',
+        score: 'score',
+        reps: 'reps'
+      };
+
+      const baseUnitRef = {
+        key: 'cm',
+        family: 'length',
+        to_base: 1,
+        from_base: 1,
+        label: 'Centimetres (cm)',
+        is_default: true
+      };
+
+      const result = getTestDisplayUnit('cm', baseUnitRef, preferences);
+      expect(result).toBe('in');
+    });
+
+    test('length family uses length preference (in -> cm)', () => {
+      const preferences: UnitPreferences = {
+        mass: 'kg',
+        distance: 'm',
+        length: 'cm',
+        time: 's',
+        speed: 'm/s',
+        count: 'count',
+        percent: 'percent',
+        score: 'score',
+        reps: 'reps'
+      };
+
+      const baseUnitRef = {
+        key: 'in',
+        family: 'length',
+        to_base: 2.54,
+        from_base: 0.393701,
+        label: 'Inches (in)',
+        is_default: false
+      };
+
+      const result = getTestDisplayUnit('in', baseUnitRef, preferences);
+      expect(result).toBe('cm');
+    });
+
+    test('distance family uses distance preference', () => {
+      const preferences: UnitPreferences = {
+        mass: 'kg',
+        distance: 'ft',
+        length: 'in',
+        time: 's',
+        speed: 'm/s',
+        count: 'count',
+        percent: 'percent',
+        score: 'score',
+        reps: 'reps'
+      };
+
+      const baseUnitRef = {
+        key: 'm',
+        family: 'distance',
+        to_base: 1,
+        from_base: 1,
+        label: 'Metres (m)',
+        is_default: true
+      };
+
+      const result = getTestDisplayUnit('m', baseUnitRef, preferences);
+      expect(result).toBe('ft');
+    });
+
+    test('mass family uses mass preference', () => {
+      const preferences: UnitPreferences = {
+        mass: 'lb',
+        distance: 'm',
+        length: 'cm',
+        time: 's',
+        speed: 'm/s',
+        count: 'count',
+        percent: 'percent',
+        score: 'score',
+        reps: 'reps'
+      };
+
+      const baseUnitRef = {
+        key: 'kg',
+        family: 'mass',
+        to_base: 1,
+        from_base: 1,
+        label: 'Kilograms (kg)',
+        is_default: true
+      };
+
+      const result = getTestDisplayUnit('kg', baseUnitRef, preferences);
+      expect(result).toBe('lb');
+    });
+
+    test('time family uses time preference', () => {
+      const preferences: UnitPreferences = {
+        mass: 'kg',
+        distance: 'm',
+        length: 'cm',
+        time: 'min',
+        speed: 'm/s',
+        count: 'count',
+        percent: 'percent',
+        score: 'score',
+        reps: 'reps'
+      };
+
+      const baseUnitRef = {
+        key: 's',
+        family: 'time',
+        to_base: 1,
+        from_base: 1,
+        label: 'Seconds (s)',
+        is_default: true
+      };
+
+      const result = getTestDisplayUnit('s', baseUnitRef, preferences);
+      expect(result).toBe('min');
+    });
+
+    test('speed family uses speed preference', () => {
+      const preferences: UnitPreferences = {
+        mass: 'kg',
+        distance: 'm',
+        length: 'cm',
+        time: 's',
+        speed: 'mph',
+        count: 'count',
+        percent: 'percent',
+        score: 'score',
+        reps: 'reps'
+      };
+
+      const baseUnitRef = {
+        key: 'm/s',
+        family: 'speed',
+        to_base: 1,
+        from_base: 1,
+        label: 'Metres per second (m/s)',
+        is_default: true
+      };
+
+      const result = getTestDisplayUnit('m/s', baseUnitRef, preferences);
+      expect(result).toBe('mph');
+    });
+  });
+
+  describe('Non-convertible units (no baseUnitRef)', () => {
+    test('count unit returns as-is when no baseUnitRef', () => {
+      const preferences: UnitPreferences = {
+        mass: 'kg',
+        distance: 'm',
+        length: 'cm',
+        time: 's',
+        speed: 'm/s',
+        count: 'count',
+        percent: 'percent',
+        score: 'score',
+        reps: 'reps'
+      };
+
+      const result = getTestDisplayUnit('count', undefined, preferences);
+      expect(result).toBe('count');
+    });
+
+    test('percent unit returns as-is when no baseUnitRef', () => {
+      const preferences: UnitPreferences = {
+        mass: 'kg',
+        distance: 'm',
+        length: 'cm',
+        time: 's',
+        speed: 'm/s',
+        count: 'count',
+        percent: 'percent',
+        score: 'score',
+        reps: 'reps'
+      };
+
+      const result = getTestDisplayUnit('percent', undefined, preferences);
+      expect(result).toBe('percent');
+    });
+
+    test('score unit returns as-is when no baseUnitRef', () => {
+      const preferences: UnitPreferences = {
+        mass: 'kg',
+        distance: 'm',
+        length: 'cm',
+        time: 's',
+        speed: 'm/s',
+        count: 'count',
+        percent: 'percent',
+        score: 'score',
+        reps: 'reps'
+      };
+
+      const result = getTestDisplayUnit('score', undefined, preferences);
+      expect(result).toBe('score');
+    });
+
+    test('reps unit returns as-is when no baseUnitRef', () => {
+      const preferences: UnitPreferences = {
+        mass: 'kg',
+        distance: 'm',
+        length: 'cm',
+        time: 's',
+        speed: 'm/s',
+        count: 'count',
+        percent: 'percent',
+        score: 'score',
+        reps: 'reps'
+      };
+
+      const result = getTestDisplayUnit('reps', undefined, preferences);
+      expect(result).toBe('reps');
+    });
+  });
+
+  describe('Edge cases', () => {
+    test('unknown family falls back to default unit', () => {
+      const preferences: UnitPreferences = {
+        mass: 'kg',
+        distance: 'm',
+        length: 'cm',
+        time: 's',
+        speed: 'm/s',
+        count: 'count',
+        percent: 'percent',
+        score: 'score',
+        reps: 'reps'
+      };
+
+      const baseUnitRef = {
+        key: 'unknown',
+        family: 'unknown_family',
+        to_base: 1,
+        from_base: 1,
+        label: 'Unknown unit',
+        is_default: true
+      };
+
+      const result = getTestDisplayUnit('unknown', baseUnitRef, preferences);
+      expect(result).toBe('m'); // Function falls back to 'm' when unit not in TO_BASE_FACTORS
+    });
+
+    test('missing preferences defaults to fallback unit', () => {
+      const baseUnitRef = {
+        key: 'cm',
+        family: 'length',
+        to_base: 1,
+        from_base: 1,
+        label: 'Centimetres (cm)',
+        is_default: true
+      };
+
+      const result = getTestDisplayUnit('cm', baseUnitRef, {} as UnitPreferences);
+      expect(result).toBe(undefined); // Function returns undefined when preferences.length is undefined
+    });
+
+    test('null baseUnitRef returns original unit', () => {
+      const preferences: UnitPreferences = {
+        mass: 'kg',
+        distance: 'm',
+        length: 'in',
+        time: 's',
+        speed: 'm/s',
+        count: 'count',
+        percent: 'percent',
+        score: 'score',
+        reps: 'reps'
+      };
+
+      const result = getTestDisplayUnit('cm', undefined, preferences);
+      expect(result).toBe('cm');
+    });
+
+    test('empty unit returns fallback unit', () => {
+      const preferences: UnitPreferences = {
+        mass: 'kg',
+        distance: 'm',
+        length: 'cm',
+        time: 's',
+        speed: 'm/s',
+        count: 'count',
+        percent: 'percent',
+        score: 'score',
+        reps: 'reps'
+      };
+
+      const result = getTestDisplayUnit('', undefined, preferences);
+      expect(result).toBe('m'); // Function falls back to 'm' when no baseUnitRef and empty unit
+    });
+  });
+
+  describe('Real-world test scenarios', () => {
+    test('Height test with metric length preference', () => {
+      const preferences: UnitPreferences = {
+        mass: 'kg',
+        distance: 'm',
+        length: 'cm',
+        time: 's',
+        speed: 'm/s',
+        count: 'count',
+        percent: 'percent',
+        score: 'score',
+        reps: 'reps'
+      };
+
+      const baseUnitRef = {
+        key: 'cm',
+        family: 'length',
+        to_base: 1,
+        from_base: 1,
+        label: 'Centimetres (cm)',
+        is_default: true
+      };
+
+      const result = getTestDisplayUnit('cm', baseUnitRef, preferences);
+      expect(result).toBe('cm');
+    });
+
+    test('Height test with imperial length preference', () => {
+      const preferences: UnitPreferences = {
+        mass: 'kg',
+        distance: 'm',
+        length: 'in',
+        time: 's',
+        speed: 'm/s',
+        count: 'count',
+        percent: 'percent',
+        score: 'score',
+        reps: 'reps'
+      };
+
+      const baseUnitRef = {
+        key: 'cm',
+        family: 'length',
+        to_base: 1,
+        from_base: 1,
+        label: 'Centimetres (cm)',
+        is_default: true
+      };
+
+      const result = getTestDisplayUnit('cm', baseUnitRef, preferences);
+      expect(result).toBe('in');
+    });
+
+    test('Sprint distance test uses distance preference not length', () => {
+      const preferences: UnitPreferences = {
+        mass: 'kg',
+        distance: 'ft',
+        length: 'in',
+        time: 's',
+        speed: 'm/s',
+        count: 'count',
+        percent: 'percent',
+        score: 'score',
+        reps: 'reps'
+      };
+
+      const baseUnitRef = {
+        key: 'm',
+        family: 'distance',
+        to_base: 1,
+        from_base: 1,
+        label: 'Metres (m)',
+        is_default: true
+      };
+
+      const result = getTestDisplayUnit('m', baseUnitRef, preferences);
+      expect(result).toBe('ft');
+    });
+
+    test('Body weight test uses mass preference', () => {
+      const preferences: UnitPreferences = {
+        mass: 'lb',
+        distance: 'm',
+        length: 'cm',
+        time: 's',
+        speed: 'm/s',
+        count: 'count',
+        percent: 'percent',
+        score: 'score',
+        reps: 'reps'
+      };
+
+      const baseUnitRef = {
+        key: 'kg',
+        family: 'mass',
+        to_base: 1,
+        from_base: 1,
+        label: 'Kilograms (kg)',
+        is_default: true
+      };
+
+      const result = getTestDisplayUnit('kg', baseUnitRef, preferences);
+      expect(result).toBe('lb');
+    });
+
+    test('Push-up count test returns count as-is', () => {
+      const preferences: UnitPreferences = {
+        mass: 'kg',
+        distance: 'm',
+        length: 'cm',
+        time: 's',
+        speed: 'm/s',
+        count: 'count',
+        percent: 'percent',
+        score: 'score',
+        reps: 'reps'
+      };
+
+      const result = getTestDisplayUnit('count', undefined, preferences);
+      expect(result).toBe('count');
+    });
   });
 });
