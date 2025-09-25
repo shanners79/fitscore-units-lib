@@ -25,6 +25,7 @@ export interface UnitPreferences {
   percent: 'percent';
   score: 'score';
   reps: 'reps';
+  level: 'level';
 }
 
 export const DEFAULT_PREFERENCES: UnitPreferences = {
@@ -36,7 +37,8 @@ export const DEFAULT_PREFERENCES: UnitPreferences = {
   count: 'count',
   percent: 'percent',
   score: 'score',
-  reps: 'reps'
+  reps: 'reps',
+  level: 'level'
 };
 
 /**
@@ -169,12 +171,13 @@ export function getMetricType(metricKey: string): keyof UnitPreferences {
   // Default mappings for common test types
   const scoreMetrics = ['deep_squat', 'overhead_squat', 'shoulder_mobility', 'trunk_stability', 'rotary_stability'];
   const countMetrics = ['push_ups', 'sit_ups', 'attempts'];
-  const repsMetrics = ['max_reps', 'total_reps'];
-  const massMetrics = ['body_weight', 'max_weight', 'load'];
+  const repsMetrics = ['max_reps', 'total_reps', 'max_pullups', 'max_pushups'];
+  const massMetrics = ['body_weight', 'max_weight', 'load', '1rm_bench', 'grip_strength'];
   const lengthMetrics = ['height', 'reach', 'arm_span', 'leg_length', 'torso_length'];
   const distanceMetrics = ['vertical_jump', 'broad_jump', 'sprint_distance', 'throw_distance'];
   const timeMetrics = ['sprint_time', 'reaction_time', 'hold_time'];
   const speedMetrics = ['max_speed', 'average_speed'];
+  const levelMetrics = ['yoyo', 'level'];
 
   if (scoreMetrics.some(m => metricKey.includes(m))) return 'score';
   if (countMetrics.some(m => metricKey.includes(m))) return 'count';
@@ -184,6 +187,7 @@ export function getMetricType(metricKey: string): keyof UnitPreferences {
   if (distanceMetrics.some(m => metricKey.includes(m))) return 'distance';
   if (timeMetrics.some(m => metricKey.includes(m))) return 'time';
   if (speedMetrics.some(m => metricKey.includes(m))) return 'speed';
+  if (levelMetrics.some(m => metricKey.includes(m))) return 'level';
 
   // Default fallback
   return 'distance';
